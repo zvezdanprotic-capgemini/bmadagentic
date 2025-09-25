@@ -1,0 +1,245 @@
+id: fullstack-architecture-tmpl
+name: Full-Stack Architecture Template
+description: Comprehensive template for full-stack application architecture documentation
+default_output: fullstack-architecture.md
+metadata:
+  version: 1.0
+  creation_date: 2023-04-20
+  updated_date: 2023-08-21
+  created_by: architect
+  category: architecture
+  tags:
+    - fullstack
+    - frontend
+    - backend
+    - infrastructure
+    - comprehensive
+sections:
+  - id: executive_summary
+    title: "Executive Summary"
+    elicit: true
+    instructions: |
+      Create a concise summary for executives and non-technical stakeholders that:
+      1. Outlines the purpose and business value of the system
+      2. Summarizes key architectural decisions and their business impact
+      3. Highlights technological innovations or improvements
+      4. Covers timeline, resource needs, and critical success factors
+      5. Addresses major risks and mitigation strategies at a high level
+    owner: architect
+    editors:
+      - product
+      - tech_lead
+    
+  - id: introduction
+    title: "Introduction and Background"
+    elicit: true
+    instructions: |
+      Provide context for the architecture:
+      1. Project background and business context
+      2. Key problems being solved
+      3. Overall vision and goals
+      4. Project scope (in and out of scope)
+      5. Stakeholders and their primary concerns
+      6. Assumptions and constraints
+    
+  - id: requirements_overview
+    title: "Requirements Overview"
+    elicit: true
+    instructions: |
+      Summarize the key requirements driving architectural decisions:
+      1. Functional requirements summary
+      2. Non-functional requirements (performance, security, scalability, etc.)
+      3. Regulatory and compliance requirements
+      4. Integration requirements with external systems
+      5. User experience requirements
+      6. Operational and support requirements
+    owner: product
+    editors:
+      - architect
+      - tech_lead
+    
+  - id: system_architecture
+    title: "System Architecture Overview"
+    elicit: true
+    instructions: |
+      Provide a high-level view of the complete system:
+      1. Create a C4 model context diagram showing the system and external interactions
+      2. Describe major components and their responsibilities
+      3. Include a layered architecture diagram
+      4. Explain key architectural patterns and styles used
+      5. Document major design principles followed
+      6. Highlight key architectural decisions with rationale
+    
+  - id: frontend_architecture
+    title: "Frontend Architecture"
+    elicit: true
+    instructions: |
+      Detail the frontend architecture:
+      1. Framework and library selections with rationale
+      2. Component hierarchy and organization
+      3. State management approach
+      4. Routing and navigation
+      5. API integration strategy
+      6. Responsive design approach
+      7. Accessibility considerations
+      8. Internationalization approach
+      9. Performance optimization strategies
+      10. Front-end security measures
+    
+  - id: backend_architecture
+    title: "Backend Architecture"
+    elicit: true
+    instructions: |
+      Detail the backend architecture:
+      1. Framework and language selections with rationale
+      2. API design (REST, GraphQL, etc.) with examples
+      3. Service layer organization
+      4. Domain model and business logic organization
+      5. Error handling strategy
+      6. Validation approach
+      7. Authentication and authorization architecture
+      8. Security measures (OWASP compliance, etc.)
+      9. Caching strategy
+      10. Background processing and job scheduling
+    
+  - id: data_architecture
+    title: "Data Architecture"
+    elicit: true
+    instructions: |
+      Document data storage and management:
+      1. Database technology selections with rationale
+      2. Data models and schema design
+      3. Entity relationship diagrams for key entities
+      4. Data access patterns and ORM approach
+      5. Database migration strategy
+      6. Data validation and integrity approach
+      7. Query optimization strategy
+      8. Data archiving and retention policy
+      9. Backup and recovery strategy
+      10. Multi-tenancy approach (if applicable)
+    
+  - id: infrastructure_architecture
+    title: "Infrastructure Architecture"
+    elicit: true
+    instructions: |
+      Detail the infrastructure design:
+      1. Deployment environment(s)
+      2. Container strategy (Docker, Kubernetes, etc.)
+      3. Network architecture and segmentation
+      4. Infrastructure as Code approach
+      5. Cloud services architecture (if applicable)
+      6. Auto-scaling strategy
+      7. High availability design
+      8. Disaster recovery approach
+      9. Environment strategy (dev, staging, prod, etc.)
+      10. Infrastructure security measures
+    
+  - id: integration_architecture
+    title: "Integration Architecture"
+    elicit: true
+    instructions: |
+      Document integration approaches:
+      1. Integration patterns used
+      2. External system integrations with diagrams
+      3. API management strategy
+      4. Message queue usage (if applicable)
+      5. Event-driven components (if applicable)
+      6. Service mesh design (if applicable)
+      7. Circuit breaking and resilience patterns
+      8. Retry strategies
+      9. Integration testing approach
+    
+  - id: security_architecture
+    title: "Security Architecture"
+    elicit: true
+    instructions: |
+      Detail the comprehensive security design:
+      1. Authentication mechanisms
+      2. Authorization model and role-based access control
+      3. Data encryption strategy (at rest and in transit)
+      4. API security measures
+      5. Input validation and output encoding
+      6. CSRF, XSS, and injection prevention
+      7. Secrets management
+      8. Security logging and monitoring
+      9. Compliance with relevant standards (GDPR, HIPAA, etc.)
+      10. Vulnerability management approach
+    
+  - id: devops_architecture
+    title: "DevOps and CI/CD Architecture"
+    elicit: true
+    instructions: |
+      Document the delivery pipeline and operational approach:
+      1. CI/CD pipeline design
+      2. Automated testing strategy
+      3. Feature flag implementation
+      4. Deployment strategies (blue-green, canary, etc.)
+      5. Monitoring and observability architecture
+      6. Logging architecture
+      7. Alerting and incident management
+      8. Performance monitoring approach
+      9. Configuration management
+      10. Secrets management in the pipeline
+    
+  - id: performance_scalability
+    title: "Performance and Scalability"
+    elicit: true
+    instructions: |
+      Detail performance considerations:
+      1. Performance requirements and SLAs
+      2. Scalability design (vertical, horizontal)
+      3. Load balancing approach
+      4. Caching strategies at different layers
+      5. Database performance optimization
+      6. Frontend performance optimization
+      7. Content delivery approach
+      8. Lazy loading strategies
+      9. Resource usage optimization
+      10. Performance testing approach
+    
+  - id: technical_debt
+    title: "Technical Debt and Future Enhancements"
+    elicit: true
+    instructions: |
+      Document known compromises and future plans:
+      1. Acknowledged technical debt items with rationale
+      2. Future architecture evolution plans
+      3. Deprecation strategies for legacy components
+      4. Upgrade paths for major technologies
+      5. Research areas for future improvements
+    
+  - id: risks_mitigations
+    title: "Risks and Mitigations"
+    elicit: true
+    instructions: |
+      Detail architectural risks:
+      1. Identify technical risks and their potential impact
+      2. Document dependencies on external systems or services and associated risks
+      3. Performance and scalability risks
+      4. Security risks
+      5. Technology selection risks
+      6. Team capability risks
+      7. Mitigation strategies for each risk
+    
+  - id: glossary
+    title: "Glossary and References"
+    elicit: false
+    instructions: |
+      Include supporting information:
+      1. Glossary of technical terms and acronyms
+      2. Architecture decision records (ADRs)
+      3. Reference to design patterns used
+      4. Links to relevant documentation
+      5. Bibliography of sources
+    
+  - id: appendices
+    title: "Appendices"
+    elicit: false
+    instructions: |
+      Include detailed technical information that supports the architecture:
+      1. Detailed API specifications
+      2. Technology evaluation matrices
+      3. Benchmark results
+      4. Detailed infrastructure diagrams
+      5. Sample code or configurations for critical components
+      6. Alternative approaches considered and reasons for rejection

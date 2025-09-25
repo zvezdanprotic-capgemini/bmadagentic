@@ -120,7 +120,7 @@ def startup_event():
         logging.info(f"Loaded {len(agents)} agents.")
 
         logging.info("Creating team graph...")
-        team_graph = create_team_graph(llm, list(agents.values()))
+        team_graph = create_team_graph(llm, list(agents.values()), CORE_RESOURCES_PATH)
         logging.info("Team graph created.")
     except Exception as e:
         logging.error(f"Error during startup: {e}")

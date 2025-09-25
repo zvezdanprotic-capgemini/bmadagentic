@@ -1,0 +1,641 @@
+# <!-- Powered by BMAD™ Core -->
+template:
+  id: frontend-architecture-template
+  name: Frontend Architecture Document
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/frontend-architecture.md
+    title: "{{project_name}} Frontend Architecture Document"
+
+workflow:
+  mode: interactive
+  elicitation: advanced-elicitation
+
+sections:
+  - id: introduction
+    title: Introduction
+    instruction: |
+      This section should introduce the Frontend Architecture Document and explain its relationship to the main
+      Architecture Document. Clarify that this document focuses on frontend-specific concerns while adhering to the
+      technology choices and architectural patterns defined in the main architecture.
+    sections:
+      - id: intro-content
+        content: |
+          This document outlines the frontend architecture for {{project_name}}, detailing the specific patterns, 
+          structures, and practices for the user interface layer. It builds upon and complements the main 
+          Architecture Document, providing additional frontend-specific guidance.
+
+          **Relationship to Main Architecture Document:**
+
+          This Frontend Architecture Document:
+          - Adheres to all technology choices defined in the main Architecture Document
+          - Follows the architectural patterns and principles established project-wide
+          - Extends those foundations with frontend-specific implementation details
+          - Should be used in conjunction with the main Architecture Document
+
+          For overall system architecture, data models, API specifications, and backend services, please refer to the main Architecture Document.
+      - id: changelog
+        title: Change Log
+        type: table
+        columns: [Date, Version, Description, Author]
+        instruction: Track document versions and changes
+
+  - id: frontend-overview
+    title: Frontend Overview
+    instruction: |
+      Provide a high-level overview of the frontend architecture. This should include:
+      1. The chosen UI framework and key libraries from the main Architecture Document
+      2. Overall architectural approach (component-based, state management philosophy, etc.)
+      3. Key frontend patterns being used
+      4. High-level structure and organization
+      5. Primary user flows
+
+      Use existing information from the main Architecture Document where appropriate, but provide
+      additional frontend-specific detail.
+    elicit: true
+    sections:
+      - id: frontend-summary
+        title: Summary
+        instruction: |
+          Write a concise summary (3-5 sentences) of the frontend architecture approach.
+          Include the main UI framework, state management solution, and overall philosophy.
+      - id: key-frontend-patterns
+        title: Key Frontend Patterns
+        instruction: |
+          List 3-5 key patterns that will guide the frontend implementation. For each pattern:
+          1. Name and briefly describe the pattern
+          2. Explain why it was chosen for this project
+          3. Note any alternatives considered
+
+          Examples include: Component Composition, Container/Presentational Pattern, Atomic Design,
+          Render Props, Higher-Order Components, Custom Hooks Pattern, etc.
+        template: "- **{{pattern_name}}:** {{pattern_description}} - _Rationale:_ {{rationale}}"
+      - id: frontend-diagram
+        title: Frontend Architecture Diagram
+        type: mermaid
+        mermaid_type: graph
+        instruction: |
+          Create a Mermaid diagram that visualizes the frontend architecture. Consider:
+          - Major component groupings
+          - State management flow
+          - Data flow between components
+          - Key services or utilities
+          - External integrations (API clients, etc.)
+
+  - id: frontend-tech-stack
+    title: Frontend Technology Stack
+    instruction: |
+      Detail the frontend technology stack, referencing and expanding upon what was defined in the main Architecture Document.
+      Focus on frontend-specific technologies not covered in detail in the main document.
+    elicit: true
+    sections:
+      - id: core-technologies
+        title: Core Technologies
+        template: |
+          The following core technologies were established in the main Architecture Document:
+          
+          - **UI Framework:** {{ui_framework}} {{ui_version}}
+          - **State Management:** {{state_management}} {{state_management_version}}
+          - **Build System:** {{build_system}} {{build_system_version}}
+          - **Package Manager:** {{package_manager}} {{package_manager_version}}
+      - id: additional-libraries
+        title: Additional Frontend Libraries
+        type: table
+        columns: [Library, Version, Purpose, Rationale]
+        instruction: |
+          List additional frontend-specific libraries not detailed in the main Architecture Document.
+          Include UI component libraries, utility libraries, testing libraries, etc. Be specific about versions.
+        examples:
+          - "| **React Router** | 6.3.0 | Client-side routing | Industry standard, declarative routing with hooks API |"
+          - "| **Styled Components** | 5.3.3 | CSS-in-JS styling | Component-scoped styles, dynamic theming support |"
+          - "| **React Query** | 3.39.0 | Data fetching and caching | Simplifies API state, caching, and synchronization |"
+      - id: development-tools
+        title: Development Tools
+        template: |
+          - **Linting:** {{linting_tool}} {{linting_version}}
+          - **Formatting:** {{formatting_tool}} {{formatting_version}}
+          - **TypeChecking:** {{typecheck_tool}} {{typecheck_version}}
+          - **Testing Framework:** {{test_framework}} {{test_framework_version}}
+          - **UI Component Explorer:** {{component_explorer}} {{component_explorer_version}}
+
+  - id: component-architecture
+    title: Component Architecture
+    instruction: |
+      Detail the component architecture approach, including organization principles, component types,
+      and how they relate to each other.
+    elicit: true
+    sections:
+      - id: component-philosophy
+        title: Component Philosophy
+        instruction: |
+          Describe the overall philosophy for components:
+          1. Component granularity approach (atomic design, etc.)
+          2. State vs. stateless components
+          3. Reusability vs. specificity balance
+          4. Component composition strategies
+      - id: component-types
+        title: Component Types
+        instruction: |
+          Define the different types of components in the system and their purposes.
+          Common examples include: Page Components, Layout Components, Feature Components,
+          UI Components, etc.
+        template: |
+          - **{{component_type}}:** {{component_description}}
+            - **Purpose:** {{purpose}}
+            - **Location:** {{location}}
+            - **Examples:** {{examples}}
+        repeatable: true
+      - id: component-organization
+        title: Component Organization
+        type: code
+        language: plaintext
+        instruction: |
+          Provide a directory structure for components showing:
+          1. How components are organized (by feature, by type, etc.)
+          2. Naming conventions
+          3. Folder structure within component directories
+          4. Related files (tests, styles, etc.)
+        examples:
+          - |
+            src/
+            ├── components/
+            │   ├── common/                # Shared UI components
+            │   │   ├── Button/
+            │   │   │   ├── Button.tsx
+            │   │   │   ├── Button.test.tsx
+            │   │   │   ├── Button.styles.ts
+            │   │   │   └── index.ts
+            │   │   ├── Card/
+            │   │   └── ...
+            │   ├── features/              # Feature-specific components
+            │   │   ├── Authentication/
+            │   │   ├── Dashboard/
+            │   │   └── ...
+            │   └── layouts/               # Layout components
+            │       ├── MainLayout/
+            │       └── ...
+            ├── pages/                     # Page components
+            │   ├── HomePage/
+            │   ├── LoginPage/
+            │   └── ...
+
+  - id: state-management
+    title: State Management
+    instruction: |
+      Detail the state management approach, including what types of state exist in the application
+      and how each is handled.
+    elicit: true
+    sections:
+      - id: state-types
+        title: State Types
+        instruction: |
+          Define the different types of state in the application and how each is managed.
+          Common examples include:
+          - UI State (form inputs, toggles, etc.)
+          - Navigation State (current route, params)
+          - Entity/Domain State (data from backend)
+          - Application State (user session, global settings)
+          - Server Cache State (API responses)
+          
+          For each type, explain what technology is used to manage it.
+        template: |
+          - **{{state_type}}**
+            - **Description:** {{description}}
+            - **Management Approach:** {{approach}}
+            - **Examples:** {{examples}}
+        repeatable: true
+      - id: state-flow-diagram
+        title: State Flow Diagram
+        type: mermaid
+        mermaid_type: graph
+        instruction: |
+          Create a diagram showing how state flows through the application.
+          Include:
+          - State sources (API, user input, etc.)
+          - State stores
+          - Component consumption of state
+          - Direction of updates
+      - id: state-management-patterns
+        title: State Management Patterns
+        instruction: |
+          Document key patterns for state management:
+          1. How components access state
+          2. Patterns for updating state
+          3. Handling async state changes
+          4. State normalization strategies (if applicable)
+          5. Performance considerations
+
+  - id: routing-navigation
+    title: Routing & Navigation
+    instruction: |
+      Detail the routing and navigation approach for the frontend application.
+    elicit: true
+    sections:
+      - id: routing-strategy
+        title: Routing Strategy
+        template: |
+          - **Routing Library:** {{routing_library}} {{routing_version}}
+          - **Route Definition Approach:** {{route_definition_approach}}
+          - **Route Protection:** {{route_protection}}
+          - **Lazy Loading Strategy:** {{lazy_loading}}
+      - id: route-definitions
+        title: Route Definitions
+        type: table
+        columns: [Path, Component, Access Control, Lazy Loaded]
+        instruction: |
+          Define the main routes in the application. Include:
+          - Path pattern
+          - Component rendered
+          - Access control requirements
+          - Whether the route is lazy loaded
+        examples:
+          - "| `/` | HomePage | Public | Yes |"
+          - "| `/login` | LoginPage | Public | No |"
+          - "| `/dashboard` | DashboardPage | Authenticated | Yes |"
+      - id: navigation-patterns
+        title: Navigation Patterns
+        instruction: |
+          Document patterns for navigation:
+          1. How to handle programmatic navigation
+          2. Navbar/menu implementation
+          3. Breadcrumb approach
+          4. Deep linking strategy
+          5. URL parameter handling
+
+  - id: api-integration
+    title: API Integration
+    instruction: |
+      Detail how the frontend integrates with backend APIs.
+    elicit: true
+    sections:
+      - id: api-client
+        title: API Client Implementation
+        template: |
+          - **Client Library:** {{api_client_library}} {{api_client_version}}
+          - **Base URL Management:** {{base_url_approach}}
+          - **Request Interceptor Usage:** {{request_interceptors}}
+          - **Response Handling:** {{response_handling}}
+          - **Error Handling:** {{error_handling}}
+      - id: api-integration-patterns
+        title: API Integration Patterns
+        instruction: |
+          Document patterns for API integration:
+          1. How API calls are organized in the codebase
+          2. Caching strategies
+          3. Loading state management
+          4. Error state handling
+          5. Retry strategies
+      - id: api-code-example
+        title: API Integration Example
+        type: code
+        language: typescript
+        instruction: |
+          Provide an example of the API integration pattern for a typical endpoint.
+          Show:
+          1. API client setup
+          2. A typical API call
+          3. How the response is handled
+          4. How errors are handled
+        examples:
+          - |
+            // api/client.ts
+            import axios from 'axios';
+            
+            export const apiClient = axios.create({
+              baseURL: process.env.REACT_APP_API_URL,
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            apiClient.interceptors.request.use((config) => {
+              const token = localStorage.getItem('token');
+              if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+              }
+              return config;
+            });
+            
+            // api/users.ts
+            import { apiClient } from './client';
+            
+            export interface User {
+              id: number;
+              name: string;
+              email: string;
+            }
+            
+            export const getUser = async (id: number): Promise<User> => {
+              try {
+                const response = await apiClient.get<User>(`/users/${id}`);
+                return response.data;
+              } catch (error) {
+                if (axios.isAxiosError(error)) {
+                  if (error.response?.status === 404) {
+                    throw new Error(`User with ID ${id} not found`);
+                  }
+                }
+                throw new Error('Failed to fetch user');
+              }
+            };
+
+  - id: styling-approach
+    title: Styling Approach
+    instruction: |
+      Detail the styling approach for the frontend application.
+    elicit: true
+    sections:
+      - id: styling-strategy
+        title: Styling Strategy
+        template: |
+          - **Primary Styling Approach:** {{styling_approach}}
+          - **CSS Organization:** {{css_organization}}
+          - **Preprocessors/Postprocessors:** {{preprocessors}}
+          - **Design System Integration:** {{design_system}}
+      - id: theming
+        title: Theming
+        instruction: |
+          Document the theming approach:
+          1. How themes are defined (colors, typography, spacing, etc.)
+          2. Theme switching mechanism (if applicable)
+          3. Dark mode support (if applicable)
+          4. How components access theme values
+      - id: styling-code-example
+        title: Styling Example
+        type: code
+        language: typescript
+        instruction: |
+          Provide an example of the styling approach for a typical component.
+          Show:
+          1. How styles are defined
+          2. How they're applied to components
+          3. How theming works (if applicable)
+        examples:
+          - |
+            // For styled-components example
+            import styled from 'styled-components';
+            
+            const Button = styled.button<{variant: 'primary' | 'secondary'}>`
+              padding: ${props => props.theme.spacing.medium};
+              background-color: ${props => props.variant === 'primary' 
+                ? props.theme.colors.primary 
+                : props.theme.colors.secondary};
+              color: ${props => props.theme.colors.white};
+              border-radius: ${props => props.theme.borderRadius.default};
+              font-weight: ${props => props.theme.typography.fontWeightBold};
+              
+              &:hover {
+                opacity: 0.9;
+              }
+            `;
+            
+            export default Button;
+
+  - id: forms-handling
+    title: Forms & User Input
+    instruction: |
+      Detail the approach for handling forms and user input in the frontend application.
+    elicit: true
+    sections:
+      - id: forms-strategy
+        title: Forms Strategy
+        template: |
+          - **Form Library:** {{form_library}} {{form_library_version}}
+          - **Validation Approach:** {{validation_approach}}
+          - **Error Handling:** {{form_error_handling}}
+          - **Field Components:** {{field_components}}
+      - id: forms-patterns
+        title: Forms Patterns
+        instruction: |
+          Document patterns for forms:
+          1. How forms are structured
+          2. How form state is managed
+          3. Field validation approach
+          4. Form submission handling
+          5. Error feedback to users
+      - id: forms-code-example
+        title: Form Implementation Example
+        type: code
+        language: typescript
+        instruction: |
+          Provide an example of the forms approach for a typical form.
+          Show:
+          1. Form setup
+          2. Field definitions
+          3. Validation
+          4. Submission handling
+          5. Error display
+
+  - id: error-handling
+    title: Error Handling & Feedback
+    instruction: |
+      Detail the approach for handling errors and providing feedback to users.
+    elicit: true
+    sections:
+      - id: error-strategy
+        title: Error Handling Strategy
+        template: |
+          - **Global Error Handling:** {{global_error_handling}}
+          - **Component-Level Errors:** {{component_error_handling}}
+          - **API Error Processing:** {{api_error_handling}}
+          - **Error Boundaries:** {{error_boundaries}}
+      - id: user-feedback
+        title: User Feedback Mechanisms
+        instruction: |
+          Document mechanisms for user feedback:
+          1. Toast/snackbar notifications
+          2. In-line form feedback
+          3. Loading indicators
+          4. Success confirmation approaches
+          5. Error pages and fallbacks
+
+  - id: testing-strategy
+    title: Testing Strategy
+    instruction: |
+      Detail the testing approach for the frontend application.
+    elicit: true
+    sections:
+      - id: testing-approach
+        title: Testing Approach
+        template: |
+          - **Unit Testing:** {{unit_testing}}
+          - **Component Testing:** {{component_testing}}
+          - **Integration Testing:** {{integration_testing}}
+          - **E2E Testing:** {{e2e_testing}}
+          - **Testing Coverage Goals:** {{coverage_goals}}
+      - id: testing-patterns
+        title: Testing Patterns
+        instruction: |
+          Document patterns for testing:
+          1. Component test structure
+          2. Mocking strategies
+          3. Test data generation
+          4. Common testing utilities
+          5. Testing best practices
+      - id: testing-code-example
+        title: Testing Example
+        type: code
+        language: typescript
+        instruction: |
+          Provide an example of the testing approach for a typical component.
+          Show:
+          1. Test setup
+          2. Component rendering
+          3. Event simulation
+          4. Assertions
+          5. Mocking (if applicable)
+
+  - id: performance-optimization
+    title: Performance Optimization
+    instruction: |
+      Detail the approach for optimizing frontend performance.
+    elicit: true
+    sections:
+      - id: performance-strategy
+        title: Performance Strategy
+        template: |
+          - **Bundle Optimization:** {{bundle_optimization}}
+          - **Code Splitting:** {{code_splitting}}
+          - **Rendering Optimization:** {{rendering_optimization}}
+          - **Asset Loading:** {{asset_loading}}
+          - **Caching Strategy:** {{caching_strategy}}
+      - id: performance-monitoring
+        title: Performance Monitoring
+        instruction: |
+          Document the approach for performance monitoring:
+          1. Key metrics to track
+          2. Tools for measurement
+          3. Performance budgets
+          4. Integration with CI/CD
+
+  - id: accessibility
+    title: Accessibility (a11y)
+    instruction: |
+      Detail the approach for ensuring frontend accessibility.
+    elicit: true
+    sections:
+      - id: accessibility-strategy
+        title: Accessibility Strategy
+        template: |
+          - **WCAG Compliance Level:** {{wcag_level}}
+          - **Semantic HTML Usage:** {{semantic_html}}
+          - **Keyboard Navigation:** {{keyboard_navigation}}
+          - **Screen Reader Support:** {{screen_reader}}
+          - **Focus Management:** {{focus_management}}
+      - id: accessibility-testing
+        title: Accessibility Testing
+        instruction: |
+          Document the approach for accessibility testing:
+          1. Tools for automated testing
+          2. Manual testing procedures
+          3. Screen reader testing
+          4. Keyboard navigation testing
+
+  - id: frontend-security
+    title: Frontend Security
+    instruction: |
+      Detail the approach for ensuring frontend security.
+    elicit: true
+    sections:
+      - id: security-strategy
+        title: Security Strategy
+        template: |
+          - **Authentication Integration:** {{auth_integration}}
+          - **XSS Prevention:** {{xss_prevention}}
+          - **CSRF Protection:** {{csrf_protection}}
+          - **Sensitive Data Handling:** {{sensitive_data}}
+          - **Dependency Security:** {{dependency_security}}
+
+  - id: development-workflow
+    title: Development Workflow
+    instruction: |
+      Detail the development workflow for the frontend application.
+    elicit: true
+    sections:
+      - id: development-setup
+        title: Development Setup
+        instruction: |
+          Document the development setup:
+          1. Local development environment
+          2. Key commands and scripts
+          3. Environment variables
+          4. Common development tasks
+      - id: code-quality
+        title: Code Quality Tools
+        template: |
+          - **Linting:** {{linting_config}}
+          - **Formatting:** {{formatting_config}}
+          - **Type Checking:** {{type_checking}}
+          - **Pre-commit Hooks:** {{pre_commit}}
+          - **CI Checks:** {{ci_checks}}
+
+  - id: deployment
+    title: Build & Deployment
+    instruction: |
+      Detail the build and deployment approach for the frontend application.
+      
+      Note: This should align with the deployment section in the main Architecture Document.
+    elicit: true
+    sections:
+      - id: build-process
+        title: Build Process
+        template: |
+          - **Build Tool:** {{build_tool}} {{build_tool_version}}
+          - **Build Configuration:** {{build_config}}
+          - **Environment Handling:** {{environment_handling}}
+          - **Asset Processing:** {{asset_processing}}
+      - id: deployment-process
+        title: Deployment Process
+        instruction: |
+          Document the deployment process:
+          1. How builds are created for different environments
+          2. Deployment targets
+          3. CDN integration (if applicable)
+          4. Caching strategies
+
+  - id: internationalization
+    title: Internationalization (i18n)
+    condition: Project requires i18n
+    instruction: |
+      Detail the internationalization approach if required by the project.
+      If not required, this section will be omitted.
+    elicit: true
+    sections:
+      - id: i18n-strategy
+        title: i18n Strategy
+        template: |
+          - **i18n Library:** {{i18n_library}} {{i18n_library_version}}
+          - **Translation Management:** {{translation_management}}
+          - **Locale Detection:** {{locale_detection}}
+          - **RTL Support:** {{rtl_support}}
+          - **Formatting (dates, numbers, etc.):** {{formatting}}
+
+  - id: developer-documentation
+    title: Developer Documentation
+    instruction: |
+      Detail the approach for frontend developer documentation.
+    elicit: true
+    sections:
+      - id: documentation-strategy
+        title: Documentation Strategy
+        template: |
+          - **Component Documentation:** {{component_docs}}
+          - **API Documentation:** {{api_docs}}
+          - **Architecture Documentation:** {{architecture_docs}}
+          - **Storybook Usage:** {{storybook}}
+
+  - id: next-steps
+    title: Next Steps
+    instruction: |
+      Outline the next steps for implementing the frontend architecture.
+    sections:
+      - id: implementation-plan
+        title: Implementation Plan
+        instruction: |
+          Create a brief implementation plan that outlines:
+          1. First components to implement
+          2. Core infrastructure setup
+          3. Incremental development approach
+          4. Key milestones
+          5. Developer onboarding guidance

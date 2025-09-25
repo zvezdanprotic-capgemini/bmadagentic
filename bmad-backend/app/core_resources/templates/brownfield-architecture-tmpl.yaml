@@ -1,0 +1,189 @@
+id: brownfield-architecture-tmpl
+name: Brownfield Architecture Template
+description: Template for documenting and enhancing existing systems
+default_output: architecture.md
+metadata:
+  version: 1.0
+  creation_date: 2023-04-18
+  updated_date: 2023-08-21
+  created_by: architect
+  category: architecture
+  tags:
+    - brownfield
+    - legacy
+    - integration
+    - modernization
+sections:
+  - id: introduction
+    title: "Introduction"
+    elicit: true
+    instructions: |
+      Create an introduction that:
+      1. Summarizes the existing system's purpose and business value
+      2. Briefly explains why modernization/enhancement is needed
+      3. States the goals and scope of this architectural work
+      4. Identifies key stakeholders and their interests
+    owner: architect
+    editors: 
+      - product
+      - tech_lead
+    
+  - id: system_overview
+    title: "Existing System Overview"
+    elicit: true
+    instructions: |
+      Document the current system:
+      1. High-level architecture diagram of existing components
+      2. Key technologies and frameworks currently in use
+      3. Major subsystems and their responsibilities
+      4. Current deployment environment
+      5. Operational characteristics (performance, availability, etc.)
+      6. Known technical debt and limitations
+    
+  - id: assessment
+    title: "System Assessment"
+    elicit: true
+    instructions: |
+      Provide a critical assessment of the current system:
+      1. Strengths worth preserving
+      2. Pain points and challenges
+      3. Security concerns or vulnerabilities
+      4. Performance bottlenecks
+      5. Scalability limitations
+      6. Maintainability issues
+      7. Technical debt inventory with severity ratings
+      8. Code quality and test coverage assessment
+      9. Documentation status
+    
+  - id: business_drivers
+    title: "Business Drivers and Requirements"
+    elicit: true
+    instructions: |
+      Clarify the business context driving changes:
+      1. Business goals and priorities
+      2. New functional requirements
+      3. Non-functional requirements (performance, security, compliance)
+      4. Time constraints and phasing considerations
+      5. Budget and resource constraints
+      6. Risk tolerance and mitigation needs
+    owner: product
+    editors:
+      - architect
+      - tech_lead
+    
+  - id: modernization_strategy
+    title: "Modernization Strategy"
+    elicit: true
+    instructions: |
+      Define the overall approach to system evolution:
+      1. Recommended modernization pattern (strangler fig, encapsulation, etc.)
+      2. Phasing strategy (big bang vs. incremental)
+      3. Prioritization framework for changes
+      4. Migration approach for data and functionality
+      5. Transition period considerations
+      6. Rollback strategy
+    
+  - id: target_architecture
+    title: "Target Architecture"
+    elicit: true
+    instructions: |
+      Define the target state architecture:
+      1. High-level architecture diagram showing target state
+      2. Components to be retained, replaced, refactored, or retired
+      3. New components to be developed
+      4. Integration points and approaches
+      5. Technology stack recommendations with rationale
+      6. Data architecture changes
+      7. API strategy
+      8. Security architecture enhancements
+    
+  - id: implementation_roadmap
+    title: "Implementation Roadmap"
+    elicit: true
+    instructions: |
+      Create a phased implementation plan:
+      1. Major milestones and dependencies
+      2. Sequence of modernization activities
+      3. Parallel development vs. sequential considerations
+      4. Testing strategy for hybrid state
+      5. Feature flag strategy if applicable
+      6. Deployment and release planning
+      7. Timeline estimates with confidence levels
+    
+  - id: risk_mitigation
+    title: "Risk Assessment and Mitigation"
+    elicit: true
+    instructions: |
+      Identify risks and mitigation strategies:
+      1. Technical risks
+      2. Business continuity risks
+      3. Team capability gaps
+      4. Timeline risks
+      5. Integration and compatibility risks
+      6. Mitigation strategies for each risk
+      7. Contingency plans for high-impact risks
+    
+  - id: operational_considerations
+    title: "Operational Considerations"
+    elicit: true
+    instructions: |
+      Address how operations will evolve:
+      1. Deployment changes
+      2. Monitoring enhancements
+      3. Alerting strategy
+      4. Backup and recovery adjustments
+      5. SLA/SLO changes
+      6. Incident response process updates
+      7. Observability improvements
+      8. Capacity planning
+    
+  - id: governance
+    title: "Governance and Quality Assurance"
+    elicit: true
+    instructions: |
+      Define governance model for the modernization:
+      1. Decision-making framework and authority
+      2. Quality gates and success criteria
+      3. Testing strategy (regression, integration, performance)
+      4. Code review process
+      5. Architecture review checkpoints
+      6. Documentation requirements
+      7. Compliance validation
+    
+  - id: resource_planning
+    title: "Resource Planning"
+    elicit: true
+    instructions: |
+      Estimate resource needs:
+      1. Team composition and skills required
+      2. External dependencies and vendors
+      3. Infrastructure and tooling needs
+      4. Cost estimates for implementation
+      5. Training and knowledge transfer needs
+    owner: tech_lead
+    editors:
+      - architect
+      - product
+    
+  - id: success_criteria
+    title: "Success Criteria and KPIs"
+    elicit: true
+    instructions: |
+      Define how success will be measured:
+      1. Technical KPIs (performance, reliability, etc.)
+      2. Business KPIs
+      3. Developer experience metrics
+      4. User experience metrics
+      5. Baseline measurements and target improvements
+    
+  - id: appendices
+    title: "Appendices"
+    elicit: true
+    instructions: |
+      Include supporting information:
+      1. Technical spike results
+      2. Detailed assessment findings
+      3. Alternative approaches considered
+      4. Reference materials and documentation links
+      5. Glossary of terms
+      6. Technology evaluation details

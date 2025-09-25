@@ -1,10 +1,8 @@
-fastapi
+langchain-openai
 langchain
 langgraph
-langchain_openai
 python-dotenv
-uvicorn
+fastapi
+uvicorn[standard]
 pydantic
-pyyaml
-langchain-community
-tiktoken
+langchain-core
