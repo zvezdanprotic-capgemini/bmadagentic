@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ChatRequest, ChatResponse, AgentsListResponse, WorkflowsListResponse } from '../types';
+import type { ChatRequest, ChatResponse, AgentsListResponse, WorkflowsListResponse, ManagedDocumentsResponse } from '../types';
 
 // Use the Vite proxy setup
 const API_BASE_URL = '/api';
@@ -29,6 +29,12 @@ export const apiService = {
   // Get list of available workflows
   async getWorkflows(): Promise<WorkflowsListResponse> {
     const response = await api.get('/workflows');
+    return response.data;
+  },
+
+  // Get list of managed documents
+  async getDocuments(): Promise<ManagedDocumentsResponse> {
+    const response = await api.get('/documents');
     return response.data;
   },
 

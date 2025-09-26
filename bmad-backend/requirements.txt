@@ -6,3 +6,5 @@ fastapi
 uvicorn[standard]
 pydantic
 langchain-core
+figmapy
+requests

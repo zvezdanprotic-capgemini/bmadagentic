@@ -25,6 +25,9 @@ ENV/
 .venv
 .env
 
+# BMAD specific
+document_storage/
+
 # Node/JavaScript
 node_modules/
 npm-debug.log

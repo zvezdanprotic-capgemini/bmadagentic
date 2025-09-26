@@ -6,8 +6,10 @@
 # AZURE_OPENAI_API_VERSION="2023-12-01-preview"
 # AZURE_OPENAI_DEPLOYMENT_NAME="your_deployment_name"
 
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from uuid import UUID, uuid4
+from datetime import datetime
 
 class ChatRequest(BaseModel):
     """Request model for the /chat endpoint."""
@@ -24,6 +26,28 @@ class AgentInfo(BaseModel):
     id: str
     title: str
     when_to_use: str
+
+class ManagedDocument(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    name: str
+    type: str  # e.g., "Figma Design", "Jira Story", "Architecture Document"
+    source: str # e.g., "FigmaService", "TaskExecutor"
+    external_url: Optional[str] = None
+    local_path: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    metadata: Dict[str, Any] = {}
+
+class ManagedDocumentsResponse(BaseModel):
+    documents: List[ManagedDocument]
+
+class FigmaCredentials(BaseModel):
+    api_token: str
+    file_key: str
+
+class CredentialsRequest(BaseModel):
+    session_id: str
+    service: str  # e.g., "figma", "jira", "github"
+    credentials: Dict[str, str]  # flexible credential storage
 
 class AgentsListResponse(BaseModel):
     """Response model for the /agents endpoint."""

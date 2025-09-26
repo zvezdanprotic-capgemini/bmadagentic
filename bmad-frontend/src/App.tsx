@@ -2,36 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChatMessage, AppState } from './types';
 import { apiService } from './services/api';
-import { FiActivity, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
 import { Description } from './components/Description';
 import { ChatWindow } from './components/ChatWindow';
 import { ChatInput } from './components/ChatInput';
+import { DocumentList } from './components/DocumentList';
+import Header from './components/Header';
+import Modal from './components/Modal';
+import FigmaIntegration from './components/FigmaIntegration';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     agents: [],
     messages: [],
+    documents: [],
     isLoading: false,
     error: null,
     sessionId: uuidv4(),
   });
 
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [isFigmaModalOpen, setIsFigmaModalOpen] = useState(false);
 
-  // Check backend health and load agents on component mount
+  const fetchDocuments = async () => {
+    try {
+      const docsResponse = await apiService.getDocuments();
+      setState(prev => ({
+        ...prev,
+        documents: docsResponse.documents,
+      }));
+    } catch (error) {
+      console.error('Failed to fetch documents:', error);
+    }
+  };
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Check if backend is running
         await apiService.healthCheck();
         setBackendStatus('online');
-
-        // Load agents
         const agentsResponse = await apiService.getAgents();
-        setState(prev => ({
-          ...prev,
-          agents: agentsResponse.agents,
-        }));
+        setState(prev => ({ ...prev, agents: agentsResponse.agents }));
+        fetchDocuments();
       } catch (error) {
         console.error('Failed to initialize app:', error);
         setBackendStatus('offline');
@@ -41,7 +53,6 @@ const App: React.FC = () => {
         }));
       }
     };
-
     initializeApp();
   }, []);
 
@@ -80,119 +91,61 @@ const App: React.FC = () => {
         messages: [...prev.messages, assistantMessage],
         isLoading: false,
       }));
+      fetchDocuments(); // Refresh documents after a response
     } catch (error) {
-      console.error('Failed to send message:', error);
+      const err = error as Error;
       setState(prev => ({
         ...prev,
+        error: `Failed to get response: ${err.message}`,
         isLoading: false,
-        error: 'Failed to send message. Please try again.',
       }));
     }
   };
 
-  const handleRetry = () => {
+  const handleRefresh = () => {
     window.location.reload();
   };
 
-  const clearError = () => {
-    setState(prev => ({ ...prev, error: null }));
-  };
-
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">BMad Agentic System</h1>
-              <div className="ml-4 flex items-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${
-                  backendStatus === 'online' ? 'bg-green-400' : 
-                  backendStatus === 'offline' ? 'bg-red-400' : 'bg-yellow-400'
-                }`}></div>
-                <span className="text-sm text-gray-600">
-                  Backend: {backendStatus === 'checking' ? 'Checking...' : backendStatus}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <FiActivity className="w-5 h-5 text-primary-600" />
-              <span className="text-sm text-gray-600">Session: {state.sessionId.slice(0, 8)}</span>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="app-container">
+      <Header onConfigClick={() => setIsFigmaModalOpen(true)} />
+      
+      <main className="app-main">
+        <Description
+          title="BMAD Agentic Framework"
+          description="This is an agentic framework for the BMAD (Build, Measure, Adapt, Disrupt) methodology. It uses a multi-agent system to automate software development tasks, from design to deployment. You can interact with the agents through this chat interface."
+          agents={state.agents}
+        />
 
-      {/* Error Banner */}
-      {state.error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <FiAlertCircle className="h-5 w-5 text-red-400" />
-            </div>
-            <div className="ml-3 flex-1">
-              <p className="text-sm text-red-700">{state.error}</p>
-            </div>
-            <div className="ml-auto pl-3">
-              <div className="flex space-x-2">
-                <button
-                  onClick={handleRetry}
-                  className="text-red-700 hover:text-red-600 text-sm font-medium"
-                >
-                  <FiRefreshCw className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={clearError}
-                  className="text-red-700 hover:text-red-600 text-sm font-medium"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
+        <div className="content-area">
+          <aside className="document-sidebar">
+            <h2 className="sidebar-title">Generated Documents</h2>
+            <DocumentList documents={state.documents} />
+          </aside>
+
+          <section className="chat-area">
+            <ChatWindow messages={state.messages} loading={state.isLoading} />
+            <ChatInput onSendMessage={handleSendMessage} disabled={state.isLoading} />
+          </section>
+        </div>
+      </main>
+
+      {backendStatus === 'offline' && (
+        <div className="status-overlay">
+          <div className="status-box">
+            <FiAlertCircle className="status-icon" />
+            <p>{state.error}</p>
+            <button onClick={handleRefresh} className="refresh-button">
+              <FiRefreshCw />
+              <span>Try Again</span>
+            </button>
           </div>
         </div>
       )}
 
-      {/* Vertical Layout Structure */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Description Section with BMAD Method Info */}
-        <div className="w-full px-4 pt-4 pb-2">
-          <div className="w-full mx-auto" style={{ maxWidth: "1200px" }}>
-            <Description 
-              title="BMAD Method - Universal AI Agent Framework"
-              agents={state.agents}
-              description={`The BMAD Method is a comprehensive AI agent framework for agile development and task management. Users can interact with this agentic system in the following ways:
-
-1. **Command-Based Communication**: Type commands with an asterisk prefix (e.g., *help, *agent, *status) to control the system. The *help command shows all available options.
-
-2. **Agent Transformation**: Use *agent [name] to transform into specialized roles like Analyst, PM, Developer, Architect, etc. Each agent has unique expertise and capabilities.
-
-3. **Task Execution**: Run *task [name] to execute specific workflows like creating documents or analyzing requirements.
-
-4. **Interactive Modes**: Choose between Incremental Mode (step-by-step with user input) or YOLO Mode (rapid generation with minimal interaction).
-
-5. **Knowledge Base Access**: Use *kb-mode to access the full BMAD knowledge base for detailed guidance.
-
-This chat interface allows you to communicate with the BMAD agentic system directly. Start by typing a message or command below.`}
-            />
-          </div>
-        </div>
-
-        {/* Chat Window Area */}
-        <div className="flex-1 flex flex-col overflow-hidden w-full mx-auto px-4" style={{ maxWidth: "1200px" }}>
-          <div className="flex-1 overflow-y-auto w-full">
-            <ChatWindow messages={state.messages} loading={state.isLoading} />
-          </div>
-          <div className="w-full">
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              disabled={backendStatus !== 'online'}
-              loading={state.isLoading}
-            />
-          </div>
-        </div>
-      </div>
+      <Modal isOpen={isFigmaModalOpen} onClose={() => setIsFigmaModalOpen(false)} title="Figma Integration">
+        <FigmaIntegration sessionId={state.sessionId} onDocumentsUpdate={fetchDocuments} />
+      </Modal>
     </div>
   );
 };

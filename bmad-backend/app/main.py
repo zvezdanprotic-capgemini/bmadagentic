@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
@@ -10,11 +10,15 @@ from langchain_openai import AzureChatOpenAI
 from langgraph.pregel import Pregel
 from fastapi import Depends
 
+# Import services
+from app.services.document_storage import DocumentStorage
+from app.services.document_extractor import DocumentExtractor
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, 
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-from app.models import ChatRequest, ChatResponse, AgentsListResponse, WorkflowsListResponse
+from app.models import ChatRequest, ChatResponse, AgentsListResponse, WorkflowsListResponse, ManagedDocument, ManagedDocumentsResponse, CredentialsRequest
 from app.agents.base_agent import load_all_agents, BMadAgent
 from app.graphs.team_graph import create_team_graph, AgentState
 from langchain_core.messages import HumanMessage, AIMessage
@@ -63,6 +67,11 @@ agents: dict[str, BMadAgent] = {}
 team_graph: Pregel | None = None
 # Store conversation history by session ID
 session_history: dict[str, list[HumanMessage | Any]] = {}
+# Document storage and extraction services
+document_storage = DocumentStorage()
+document_extractor = DocumentExtractor()
+# Store credentials by session ID - simple in-memory dict for now
+session_credentials: dict[str, dict[str, dict[str, str]]] = {}
 
 def get_team_graph() -> Pregel:
     """Dependency to get the compiled team graph."""
@@ -171,6 +180,20 @@ async def chat(request: ChatRequest, graph: Pregel = Depends(get_team_graph)):
         # Add the assistant response to the session history
         session_history[request.session_id].append(last_message)
         
+        # Extract documents from LLM response
+        try:
+            response_text = last_message.content
+            extracted_docs = document_extractor.extract_documents_from_response(response_text, request.session_id)
+            
+            # Save extracted documents
+            for doc in extracted_docs:
+                document_storage.save_document(doc, request.session_id)
+                
+            if extracted_docs:
+                logging.info(f"Extracted {len(extracted_docs)} documents from LLM response")
+        except Exception as doc_error:
+            logging.error(f"Error extracting documents: {doc_error}")
+        
         logging.info(f"Returning response from {final_state.get('sender', 'assistant')}")
         return ChatResponse(
             message=last_message.content,
@@ -197,12 +220,98 @@ async def chat(request: ChatRequest, graph: Pregel = Depends(get_team_graph)):
             sender="system"
         )
 
+@app.get("/api/documents", response_model=ManagedDocumentsResponse)
+async def get_documents(session_id: str = None):
+    """Get all managed documents, optionally filtered by session ID."""
+    if session_id:
+        documents = document_storage.get_documents_for_session(session_id)
+    else:
+        documents = document_storage.get_all_documents()
+    return ManagedDocumentsResponse(documents=documents)
 
-@app.get("/agents", response_model=AgentsListResponse, summary="Get a list of available agents")
+@app.post("/api/credentials")
+async def store_credentials(request: CredentialsRequest):
+    """Store service credentials for a session."""
+    session_id = request.session_id
+    service = request.service
+    
+    # Initialize session if not exists
+    if session_id not in session_credentials:
+        session_credentials[session_id] = {}
+    
+    # Store credentials for this service
+    session_credentials[session_id][service] = request.credentials
+    
+    return {"message": f"Credentials stored for {service}", "session_id": session_id}
+
+@app.get("/api/credentials/{session_id}/{service}")
+async def get_credentials(session_id: str, service: str):
+    """Get credentials for a specific service and session."""
+    if session_id not in session_credentials:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    if service not in session_credentials[session_id]:
+        raise HTTPException(status_code=404, detail=f"Credentials for {service} not found")
+    
+    return session_credentials[session_id][service]
+
+@app.post("/api/figma/components")
+async def get_figma_components(request: dict):
+    """Get components from a Figma file."""
+    from app.services.figma_service import FigmaService
+    
+    session_id = request.get("session_id")
+    file_id = request.get("file_id")
+    
+    if not session_id or not file_id:
+        raise HTTPException(status_code=400, detail="session_id and file_id are required")
+    
+    # Get Figma credentials for this session
+    if session_id not in session_credentials or "figma" not in session_credentials[session_id]:
+        raise HTTPException(status_code=401, detail="Figma credentials not found for this session")
+    
+    figma_creds = session_credentials[session_id]["figma"]
+    figma_service = FigmaService(token=figma_creds["token"])
+    
+    # Get the documents from the Figma service
+    documents = figma_service.get_file_components(file_id, session_id)
+    
+    # Save the documents in our document storage service
+    for doc in documents:
+        document_storage.save_document(doc, session_id)
+    
+    return {"documents": documents}
+
+@app.post("/api/figma/user-flows")
+async def get_figma_user_flows(request: dict):
+    """Get user flows from a Figma file."""
+    from app.services.figma_service import FigmaService
+    
+    session_id = request.get("session_id")
+    file_id = request.get("file_id")
+    
+    if not session_id or not file_id:
+        raise HTTPException(status_code=400, detail="session_id and file_id are required")
+    
+    # Get Figma credentials for this session
+    if session_id not in session_credentials or "figma" not in session_credentials[session_id]:
+        raise HTTPException(status_code=401, detail="Figma credentials not found for this session")
+    
+    figma_creds = session_credentials[session_id]["figma"]
+    figma_service = FigmaService(token=figma_creds["token"])
+    
+    # Get the documents from the Figma service
+    documents = figma_service.get_user_flow_diagram(file_id, session_id)
+    
+    # Save the documents in our document storage service
+    for doc in documents:
+        document_storage.save_document(doc, session_id)
+    
+    return {"documents": documents}
+
+@app.get("/agents", response_model=AgentsListResponse)
 def get_agents():
-    """
-    Returns a list of all loaded specialist agents.
-    """
+    """Returns a list of all loaded agents."""
     if not agents:
         return {"agents": []}
     
@@ -228,3 +337,7 @@ def clear_session(session_id: str):
         del session_history[session_id]
         return {"status": "success", "message": f"Session {session_id} history cleared"}
     return {"status": "not_found", "message": f"No history found for session {session_id}"}
+
+# Include document routes
+from app.routes.document_routes import router as document_router
+app.include_router(document_router, prefix="/api")
