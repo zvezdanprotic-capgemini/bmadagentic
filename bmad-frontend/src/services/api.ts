@@ -121,4 +121,16 @@ export const apiService = {
     const response = await api.post('/chat', request);
     return response.data;
   },
+
+  // List logs for a session
+  async listLogs(sessionId: string): Promise<{ session_id: string; logs: { file: string; timestamp: string }[] }> {
+    const response = await api.get(`/logs/${sessionId}`);
+    return response.data;
+  },
+
+  // Get a single log file's content
+  async getLog<T = unknown>(sessionId: string, filename: string): Promise<T> {
+    const response = await api.get(`/logs/${sessionId}/${filename}`);
+    return response.data as T;
+  },
 };

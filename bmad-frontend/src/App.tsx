@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChatMessage, AppState } from './types';
 import { apiService } from './services/api';
@@ -10,6 +10,7 @@ import { DocumentList } from './components/DocumentList';
 import Header from './components/Header';
 import Modal from './components/Modal';
 import FigmaIntegration from './components/FigmaIntegration';
+import { LogViewer } from './components/LogViewer';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 
@@ -27,20 +28,20 @@ const App: React.FC = () => {
 
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [isFigmaModalOpen, setIsFigmaModalOpen] = useState(false);
+  const [configView, setConfigView] = useState<'figma' | 'logs'>('figma');
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       if (!state.sessionId) return;
-      
       const docsResponse = await apiService.getDocuments(state.sessionId);
       setState(prev => ({
         ...prev,
         documents: docsResponse.documents,
       }));
     } catch (error) {
-      console.error('Failed to fetch documents:', error);
+      console.error('Failed to fetch documents:', error as Error);
     }
-  };
+  }, [state.sessionId]);
 
   useEffect(() => {
     // Listen for auth errors
@@ -52,9 +53,7 @@ const App: React.FC = () => {
         error: 'Authentication failed. Please login again.'
       }));
     };
-    
     window.addEventListener('auth_error', handleAuthError);
-    
     return () => {
       window.removeEventListener('auth_error', handleAuthError);
     };
@@ -101,7 +100,7 @@ const App: React.FC = () => {
       }
     };
     initializeApp();
-  }, []);
+  }, [fetchDocuments]);
 
   const handleSendMessage = async (messageContent: string) => {
     const userMessage: ChatMessage = {
@@ -174,8 +173,8 @@ const App: React.FC = () => {
       } catch (resourceError) {
         console.error('Failed to fetch resources after login:', resourceError);
       }
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (e) {
+      console.error('Login failed:', e as Error);
       setState(prev => ({
         ...prev,
         error: 'Login failed. Please check your credentials.',
@@ -191,7 +190,7 @@ const App: React.FC = () => {
       // Automatically login after successful registration
       await handleLogin(username, password);
       setShowRegister(false);
-    } catch (error) {
+    } catch {
       setState(prev => ({
         ...prev,
         error: 'Registration failed. Username may already be taken.',
@@ -278,8 +277,37 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <Modal isOpen={isFigmaModalOpen} onClose={() => setIsFigmaModalOpen(false)} title="Figma Integration">
-        <FigmaIntegration sessionId={state.sessionId} onDocumentsUpdate={fetchDocuments} />
+      <Modal isOpen={isFigmaModalOpen} onClose={() => setIsFigmaModalOpen(false)} title="Configuration">
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <button
+            onClick={() => setConfigView('figma')}
+            className="refresh-button"
+            style={{
+              fontSize: '0.7rem',
+              background: configView === 'figma' ? '#2563eb' : undefined,
+            }}
+          >
+            Figma
+          </button>
+          <button
+            onClick={() => setConfigView('logs')}
+            className="refresh-button"
+            style={{
+              fontSize: '0.7rem',
+              background: configView === 'logs' ? '#2563eb' : undefined,
+            }}
+          >
+            LLM Logs
+          </button>
+        </div>
+        {configView === 'figma' && (
+          <FigmaIntegration sessionId={state.sessionId} onDocumentsUpdate={fetchDocuments} />
+        )}
+        {configView === 'logs' && (
+          <div style={{ height: '60vh', width: '100%', maxWidth: '640px' }}>
+            <LogViewer sessionId={state.sessionId} />
+          </div>
+        )}
       </Modal>
     </div>
   );

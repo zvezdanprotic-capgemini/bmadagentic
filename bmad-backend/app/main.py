@@ -16,6 +16,7 @@ from app.security import get_current_user, is_admin
 # Import services
 from app.services.document_storage import DocumentStorage
 from app.services.document_extractor import DocumentExtractor
+from app.services.llm_response_logger import LLMResponseLogger
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, 
@@ -73,6 +74,7 @@ session_history: dict[str, list[HumanMessage | Any]] = {}
 # Document storage and extraction services
 document_storage = DocumentStorage()
 document_extractor = DocumentExtractor()
+llm_response_logger = LLMResponseLogger()
 # Store credentials by session ID - simple in-memory dict for now
 session_credentials: dict[str, dict[str, dict[str, str]]] = {}
 
@@ -197,6 +199,17 @@ async def chat(request: ChatRequest, graph: Pregel = Depends(get_team_graph), cu
         except Exception as doc_error:
             logging.error(f"Error extracting documents: {doc_error}")
         
+        # Log response (best effort, non-blocking on failure)
+        try:
+            llm_response_logger.log_response(
+                session_id=request.session_id,
+                content=last_message.content,
+                sender=final_state.get("sender", "assistant"),
+                extra={"message_index": len(session_history[request.session_id]) - 1}
+            )
+        except Exception as log_err:
+            logging.error(f"LLM response logging failed: {log_err}")
+
         logging.info(f"Returning response from {final_state.get('sender', 'assistant')}")
         return ChatResponse(
             message=last_message.content,
@@ -218,6 +231,16 @@ async def chat(request: ChatRequest, graph: Pregel = Depends(get_team_graph), cu
         # Add error message to session history
         session_history[request.session_id].append(error_ai_message)
         
+        try:
+            llm_response_logger.log_response(
+                session_id=request.session_id,
+                content=error_message,
+                sender="system",
+                extra={"error": True, "exception_type": type(e).__name__}
+            )
+        except Exception as log_err:
+            logging.error(f"Error logging failed: {log_err}")
+
         return ChatResponse(
             message=error_message,
             sender="system"
@@ -231,6 +254,20 @@ async def get_documents(session_id: str = None, current_user: Dict[str, Any] = D
     else:
         documents = document_storage.get_all_documents()
     return ManagedDocumentsResponse(documents=documents)
+
+@app.get("/api/logs/{session_id}")
+async def get_session_logs(session_id: str, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Return list of log metadata for a session."""
+    logs = llm_response_logger.list_logs(session_id)
+    return {"session_id": session_id, "logs": logs}
+
+@app.get("/api/logs/{session_id}/{filename}")
+async def get_session_log_file(session_id: str, filename: str, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Return the full content of a specific log file."""
+    content = llm_response_logger.read_log(session_id, filename)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Log not found")
+    return content
 
 @app.post("/api/credentials")
 async def store_credentials(request: CredentialsRequest, current_user: Dict[str, Any] = Depends(get_current_user)):

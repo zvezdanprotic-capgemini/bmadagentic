@@ -71,6 +71,7 @@ class BMadAgent:
             logging.debug(f"Input to {self.id}: {messages[-1] if messages else 'No messages'}")
             response = self.runnable.invoke({"messages": messages})
             logging.info(f"Agent {self.id} response received, length: {len(response.content) if hasattr(response, 'content') else 'N/A'}")
+            logging.info(f"Response details: {response}")
             return response
         except Exception as e:
             logging.error(f"Error in agent {self.id} invoke: {e}")
