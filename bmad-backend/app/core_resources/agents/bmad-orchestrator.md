@@ -121,4 +121,6 @@ dependencies:
     - kb-mode-interaction.md
   utils:
     - workflow-management.md
+document-guidance:
+ - When generating markdown documents do a proper markdown start and end. FOr example you MUST put three quotes at the start and at the end of a markdown document.
 ```

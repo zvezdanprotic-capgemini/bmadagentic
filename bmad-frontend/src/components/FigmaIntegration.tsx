@@ -10,7 +10,7 @@ const FigmaIntegration: React.FC<FigmaIntegrationProps> = ({ sessionId, onDocume
   const [fileId, setFileId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<any>(null);
 
   const storeFigmaCredentials = async () => {
     if (!figmaToken) {
@@ -41,7 +41,7 @@ const FigmaIntegration: React.FC<FigmaIntegrationProps> = ({ sessionId, onDocume
       setError('');
       alert('Figma credentials stored successfully!');
     } catch (err) {
-      setError(`Error storing credentials: ${err.message}`);
+      setError(`Error storing credentials: ${(err as Error).message}`);
     }
   };
 
@@ -82,7 +82,7 @@ const FigmaIntegration: React.FC<FigmaIntegrationProps> = ({ sessionId, onDocume
         onDocumentsUpdate();
       }
     } catch (err) {
-      setError(`Error fetching components: ${err.message}`);
+      setError(`Error fetching components: ${(err as Error).message}`);
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +125,7 @@ const FigmaIntegration: React.FC<FigmaIntegrationProps> = ({ sessionId, onDocume
         onDocumentsUpdate();
       }
     } catch (err) {
-      setError(`Error fetching user flows: ${err.message}`);
+      setError(`Error fetching user flows: ${(err as Error).message}`);
     } finally {
       setIsLoading(false);
     }
@@ -215,7 +215,7 @@ const FigmaIntegration: React.FC<FigmaIntegrationProps> = ({ sessionId, onDocume
                 <div>
                   <p className="font-medium mb-1">Components:</p>
                   <ul className="list-disc list-inside max-h-40 overflow-y-auto">
-                    {results.data.components.map((component, index) => (
+                    {results.data.components.map((component: any, index: number) => (
                       <li key={index} className="text-sm">
                         <strong>{component.name}</strong> ({component.type})
                         {component.parent && <span className="text-gray-600"> - in {component.parent}</span>}
@@ -238,7 +238,7 @@ const FigmaIntegration: React.FC<FigmaIntegrationProps> = ({ sessionId, onDocume
                 <div className="mb-3">
                   <p className="font-medium mb-1">Screens:</p>
                   <ul className="list-disc list-inside max-h-32 overflow-y-auto">
-                    {results.data.screens.map((screen, index) => (
+                    {results.data.screens.map((screen: any, index: number) => (
                       <li key={index} className="text-sm">
                         <strong>{screen.name}</strong>
                         {screen.parent && <span className="text-gray-600"> - in {screen.parent}</span>}
@@ -252,7 +252,7 @@ const FigmaIntegration: React.FC<FigmaIntegrationProps> = ({ sessionId, onDocume
                 <div>
                   <p className="font-medium mb-1">Flow Connectors:</p>
                   <ul className="list-disc list-inside max-h-32 overflow-y-auto">
-                    {results.data.user_flows.map((flow, index) => (
+                    {results.data.user_flows.map((flow: any, index: number) => (
                       <li key={index} className="text-sm">
                         <strong>{flow.name}</strong> ({flow.type})
                         {flow.parent && <span className="text-gray-600"> - in {flow.parent}</span>}

@@ -10,6 +10,8 @@ import { DocumentList } from './components/DocumentList';
 import Header from './components/Header';
 import Modal from './components/Modal';
 import FigmaIntegration from './components/FigmaIntegration';
+import { Login } from './components/Login';
+import { Register } from './components/Register';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
@@ -19,6 +21,8 @@ const App: React.FC = () => {
     isLoading: false,
     error: null,
     sessionId: uuidv4(),
+    user: null,
+    isAuthenticated: false,
   });
 
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
@@ -26,7 +30,9 @@ const App: React.FC = () => {
 
   const fetchDocuments = async () => {
     try {
-      const docsResponse = await apiService.getDocuments();
+      if (!state.sessionId) return;
+      
+      const docsResponse = await apiService.getDocuments(state.sessionId);
       setState(prev => ({
         ...prev,
         documents: docsResponse.documents,
@@ -37,13 +43,54 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    // Listen for auth errors
+    const handleAuthError = () => {
+      setState(prev => ({ 
+        ...prev, 
+        user: null,
+        isAuthenticated: false,
+        error: 'Authentication failed. Please login again.'
+      }));
+    };
+    
+    window.addEventListener('auth_error', handleAuthError);
+    
+    return () => {
+      window.removeEventListener('auth_error', handleAuthError);
+    };
+  }, []);
+
+  useEffect(() => {
     const initializeApp = async () => {
       try {
         await apiService.healthCheck();
         setBackendStatus('online');
-        const agentsResponse = await apiService.getAgents();
-        setState(prev => ({ ...prev, agents: agentsResponse.agents }));
-        fetchDocuments();
+        
+        // Check if user is already logged in (has token)
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          try {
+            const userData = await apiService.getCurrentUser();
+            setState(prev => ({ 
+              ...prev, 
+              user: userData.user,
+              isAuthenticated: true
+            }));
+            
+            // Load agents and documents only if authenticated
+            try {
+              const agentsResponse = await apiService.getAgents();
+              setState(prev => ({ ...prev, agents: agentsResponse.agents }));
+              fetchDocuments();
+            } catch (resourceError) {
+              console.error('Failed to fetch resources:', resourceError);
+            }
+          } catch (authError) {
+            // Token is invalid or expired, clear it
+            localStorage.removeItem('auth_token');
+            console.error('Authentication failed:', authError);
+          }
+        }
       } catch (error) {
         console.error('Failed to initialize app:', error);
         setBackendStatus('offline');
@@ -106,29 +153,117 @@ const App: React.FC = () => {
     window.location.reload();
   };
 
+  const [showRegister, setShowRegister] = useState(false);
+  
+  const handleLogin = async (username: string, password: string) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const response = await apiService.login({ username, password });
+      setState(prev => ({
+        ...prev,
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      }));
+      
+      // Load protected resources after successful login
+      try {
+        const agentsResponse = await apiService.getAgents();
+        setState(prev => ({ ...prev, agents: agentsResponse.agents }));
+        fetchDocuments();
+      } catch (resourceError) {
+        console.error('Failed to fetch resources after login:', resourceError);
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      setState(prev => ({
+        ...prev,
+        error: 'Login failed. Please check your credentials.',
+        isLoading: false,
+      }));
+    }
+  };
+
+  const handleRegister = async (username: string, password: string, name: string, email?: string) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    try {
+      await apiService.register({ username, password, name, email });
+      // Automatically login after successful registration
+      await handleLogin(username, password);
+      setShowRegister(false);
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: 'Registration failed. Username may already be taken.',
+        isLoading: false,
+      }));
+    }
+  };
+
+  const handleLogout = async () => {
+    await apiService.logout();
+    setState(prev => ({
+      ...prev,
+      user: null,
+      isAuthenticated: false,
+      messages: [],
+    }));
+  };
+
   return (
     <div className="app-container">
-      <Header onConfigClick={() => setIsFigmaModalOpen(true)} />
+      <Header 
+        onConfigClick={() => setIsFigmaModalOpen(true)} 
+        user={state.user}
+        onLogout={handleLogout}
+      />
       
-      <main className="app-main">
-        <Description
-          title="BMAD Agentic Framework"
-          description="This is an agentic framework for the BMAD (Build, Measure, Adapt, Disrupt) methodology. It uses a multi-agent system to automate software development tasks, from design to deployment. You can interact with the agents through this chat interface."
-          agents={state.agents}
-        />
+      {!state.isAuthenticated ? (
+        <main className="app-auth">
+          <div className="auth-container">
+            {state.error && (
+              <div className="auth-error">
+                <FiAlertCircle /> {state.error}
+              </div>
+            )}
+            {showRegister ? (
+              <Register 
+                onRegister={handleRegister} 
+                onToggleForm={() => setShowRegister(false)} 
+                isLoading={state.isLoading} 
+                error={state.error}
+              />
+            ) : (
+              <Login 
+                onLogin={handleLogin} 
+                onToggleForm={() => setShowRegister(true)} 
+                isLoading={state.isLoading}
+                error={state.error}
+              />
+            )}
+          </div>
+        </main>
+      ) : (
+        <main className="app-main">
+          <Description
+            title="BMAD Agentic Framework"
+            description="This is an agentic framework for the BMAD (Build, Measure, Adapt, Disrupt) methodology. It uses a multi-agent system to automate software development tasks, from design to deployment. You can interact with the agents through this chat interface."
+            agents={state.agents}
+          />
 
-        <div className="content-area">
-          <aside className="document-sidebar">
-            <h2 className="sidebar-title">Generated Documents</h2>
-            <DocumentList documents={state.documents} />
-          </aside>
+          <div className="content-area">
+            <aside className="document-sidebar">
+              <h2 className="sidebar-title">Generated Documents</h2>
+              <DocumentList documents={state.documents} sessionId={state.sessionId} />
+            </aside>
 
-          <section className="chat-area">
-            <ChatWindow messages={state.messages} loading={state.isLoading} />
-            <ChatInput onSendMessage={handleSendMessage} disabled={state.isLoading} />
-          </section>
-        </div>
-      </main>
+            <section className="chat-area">
+              <ChatWindow messages={state.messages} loading={state.isLoading} />
+              <ChatInput onSendMessage={handleSendMessage} disabled={state.isLoading} />
+            </section>
+          </div>
+        </main>
+      )}
 
       {backendStatus === 'offline' && (
         <div className="status-overlay">

@@ -62,3 +62,26 @@ class WorkflowInfo(BaseModel):
 class WorkflowsListResponse(BaseModel):
     """Response model for the /workflows endpoint."""
     workflows: List[WorkflowInfo]
+
+# Authentication models
+class User(BaseModel):
+    id: str
+    username: str
+    name: str
+    email: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    name: str
+    email: Optional[str] = None
+
+class AuthResponse(BaseModel):
+    user: User
+    token: str
+    success: bool
+    message: Optional[str] = None

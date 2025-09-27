@@ -12,21 +12,35 @@ class TestDocumentExtractor(unittest.TestCase):
     
     def test_extract_markdown_documents(self):
         """Test extraction of markdown documents from text."""
-        # Test input with markdown headers and content
-        markdown_text = """
-# Document Title
-This is a paragraph in the document.
-- Item 1
-- Item 2
+        # Test input with markdown in code blocks (explicit extraction)
+        markdown_text_with_blocks = """
+Here's a markdown document:
 
-## Second Section
-More content here.
+```markdown
+# Document Title
+This is a comprehensive document with substantial content that includes multiple paragraphs,
+lists, and various markdown formatting elements to ensure it meets the extraction criteria.
+
+## Features
+- Feature 1: This is a detailed description of the first feature
+- Feature 2: This is a detailed description of the second feature  
+- Feature 3: This is a detailed description of the third feature
+
+## Additional Content
+More detailed content here with **bold text** and *italic text* to demonstrate
+various markdown formatting options. This ensures the document has enough content
+and formatting to be recognized as a valid markdown document.
+
+### Subsection
+Even more content to make this a substantial document that will definitely
+meet all the extraction criteria for our improved parser.
+```
         """
         
         # Test the private method directly
-        documents = self.extractor._extract_markdown_documents(markdown_text, self.test_session_id)
+        documents = self.extractor._extract_markdown_documents(markdown_text_with_blocks, self.test_session_id)
         
-        # Check results
+        # Check results  
         self.assertTrue(len(documents) > 0, "Should extract at least one markdown document")
         doc = documents[0]
         self.assertEqual(doc.name, "Document Title")

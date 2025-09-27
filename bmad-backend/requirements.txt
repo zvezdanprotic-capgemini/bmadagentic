@@ -8,3 +8,8 @@ pydantic
 langchain-core
 figmapy
 requests
+pyjwt
+markdown
+beautifulsoup4
+lxml
+langchain_community

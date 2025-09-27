@@ -1,14 +1,17 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 import logging
 import traceback
 from pathlib import Path
+from typing import Dict, Any
 
 from langchain_openai import AzureChatOpenAI
 from langgraph.pregel import Pregel
 from fastapi import Depends
+
+from app.security import get_current_user, is_admin
 
 # Import services
 from app.services.document_storage import DocumentStorage
@@ -18,7 +21,7 @@ from app.services.document_extractor import DocumentExtractor
 logging.basicConfig(level=logging.DEBUG, 
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-from app.models import ChatRequest, ChatResponse, AgentsListResponse, WorkflowsListResponse, ManagedDocument, ManagedDocumentsResponse, CredentialsRequest
+from app.models import ChatRequest, ChatResponse, AgentsListResponse, WorkflowsListResponse, ManagedDocument, ManagedDocumentsResponse, CredentialsRequest, LoginRequest, RegisterRequest, AuthResponse
 from app.agents.base_agent import load_all_agents, BMadAgent
 from app.graphs.team_graph import create_team_graph, AgentState
 from langchain_core.messages import HumanMessage, AIMessage
@@ -144,8 +147,8 @@ def read_root():
     """Checks if the service is running."""
     return {"status": "BMad Backend is running"}
 
-@app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, graph: Pregel = Depends(get_team_graph)):
+@app.post("/api/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest, graph: Pregel = Depends(get_team_graph), current_user: Dict[str, Any] = Depends(get_current_user)):
     """
     Handles a chat message from the user, routes it through the agent graph,
     and returns the final response. Maintains conversation history by session ID.
@@ -221,8 +224,8 @@ async def chat(request: ChatRequest, graph: Pregel = Depends(get_team_graph)):
         )
 
 @app.get("/api/documents", response_model=ManagedDocumentsResponse)
-async def get_documents(session_id: str = None):
-    """Get all managed documents, optionally filtered by session ID."""
+async def get_documents(session_id: str = None, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Get all managed documents, optionally filtered by session ID. Requires authentication."""
     if session_id:
         documents = document_storage.get_documents_for_session(session_id)
     else:
@@ -230,8 +233,8 @@ async def get_documents(session_id: str = None):
     return ManagedDocumentsResponse(documents=documents)
 
 @app.post("/api/credentials")
-async def store_credentials(request: CredentialsRequest):
-    """Store service credentials for a session."""
+async def store_credentials(request: CredentialsRequest, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Store service credentials for a session. Requires authentication."""
     session_id = request.session_id
     service = request.service
     
@@ -245,30 +248,30 @@ async def store_credentials(request: CredentialsRequest):
     return {"message": f"Credentials stored for {service}", "session_id": session_id}
 
 @app.get("/api/credentials/{session_id}/{service}")
-async def get_credentials(session_id: str, service: str):
-    """Get credentials for a specific service and session."""
+async def get_credentials(session_id: str, service: str, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Get credentials for a specific service and session. Requires authentication."""
     if session_id not in session_credentials:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     
     if service not in session_credentials[session_id]:
-        raise HTTPException(status_code=404, detail=f"Credentials for {service} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Credentials for {service} not found")
     
     return session_credentials[session_id][service]
 
 @app.post("/api/figma/components")
-async def get_figma_components(request: dict):
-    """Get components from a Figma file."""
+async def get_figma_components(request: dict, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Get components from a Figma file. Requires authentication."""
     from app.services.figma_service import FigmaService
     
     session_id = request.get("session_id")
     file_id = request.get("file_id")
     
     if not session_id or not file_id:
-        raise HTTPException(status_code=400, detail="session_id and file_id are required")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="session_id and file_id are required")
     
     # Get Figma credentials for this session
     if session_id not in session_credentials or "figma" not in session_credentials[session_id]:
-        raise HTTPException(status_code=401, detail="Figma credentials not found for this session")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Figma credentials not found for this session")
     
     figma_creds = session_credentials[session_id]["figma"]
     figma_service = FigmaService(token=figma_creds["token"])
@@ -283,19 +286,19 @@ async def get_figma_components(request: dict):
     return {"documents": documents}
 
 @app.post("/api/figma/user-flows")
-async def get_figma_user_flows(request: dict):
-    """Get user flows from a Figma file."""
+async def get_figma_user_flows(request: dict, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Get user flows from a Figma file. Requires authentication."""
     from app.services.figma_service import FigmaService
     
     session_id = request.get("session_id")
     file_id = request.get("file_id")
     
     if not session_id or not file_id:
-        raise HTTPException(status_code=400, detail="session_id and file_id are required")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="session_id and file_id are required")
     
     # Get Figma credentials for this session
     if session_id not in session_credentials or "figma" not in session_credentials[session_id]:
-        raise HTTPException(status_code=401, detail="Figma credentials not found for this session")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Figma credentials not found for this session")
     
     figma_creds = session_credentials[session_id]["figma"]
     figma_service = FigmaService(token=figma_creds["token"])
@@ -309,9 +312,9 @@ async def get_figma_user_flows(request: dict):
     
     return {"documents": documents}
 
-@app.get("/agents", response_model=AgentsListResponse)
-def get_agents():
-    """Returns a list of all loaded agents."""
+@app.get("/api/agents", response_model=AgentsListResponse)
+def get_agents(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Returns a list of all loaded agents. Requires authentication."""
     if not agents:
         return {"agents": []}
     
@@ -319,25 +322,37 @@ def get_agents():
     return {"agents": agent_info_list}
 
 
-@app.get("/workflows", response_model=WorkflowsListResponse, summary="Get a list of available workflows")
-def get_workflows():
+@app.get("/api/workflows", response_model=WorkflowsListResponse, summary="Get a list of available workflows")
+def get_workflows(current_user: Dict[str, Any] = Depends(get_current_user)):
     """
-    (Placeholder) Returns a list of available workflows.
+    (Placeholder) Returns a list of available workflows. Requires authentication.
     """
     # This would be loaded from the core_resources/workflows directory in a full implementation
     return {"workflows": []}
 
 
 @app.delete("/session/{session_id}", summary="Clear session history")
-def clear_session(session_id: str):
+def clear_session(session_id: str, current_user: Dict[str, Any] = Depends(get_current_user)):
     """
-    Clears the conversation history for a specific session.
+    Clears the conversation history for a specific session. Requires authentication.
     """
     if session_id in session_history:
         del session_history[session_id]
         return {"status": "success", "message": f"Session {session_id} history cleared"}
     return {"status": "not_found", "message": f"No history found for session {session_id}"}
 
-# Include document routes
+# Include routes
 from app.routes.document_routes import router as document_router
+from app.routes.auth_routes import router as auth_router
+
+# Create an API router for /api endpoints
+api_router = APIRouter(prefix="/api")
+
+@api_router.get("/", summary="API root endpoint")
+async def api_root():
+    """API root endpoint to check API status."""
+    return {"status": "BMAD API is running", "version": "1.0.0"}
+
+app.include_router(api_router)
 app.include_router(document_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")

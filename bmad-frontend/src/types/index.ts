@@ -46,6 +46,32 @@ export interface ManagedDocumentsResponse {
   documents: ManagedDocument[];
 }
 
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  email?: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  name: string;
+  email?: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+  success: boolean;
+  message?: string;
+}
+
 export interface AppState {
   agents: Agent[];
   messages: ChatMessage[];
@@ -53,4 +79,6 @@ export interface AppState {
   isLoading: boolean;
   error: string | null;
   sessionId: string;
+  user: User | null;
+  isAuthenticated: boolean;
 }

@@ -27,6 +27,7 @@ ENV/
 
 # BMAD specific
 document_storage/
+user_storage/
 
 # Node/JavaScript
 node_modules/

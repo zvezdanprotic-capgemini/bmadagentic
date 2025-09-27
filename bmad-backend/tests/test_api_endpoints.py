@@ -5,6 +5,21 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
 from app.main import app, get_team_graph
+from app.security import get_current_user
+
+# Create a mock user for tests
+mock_user = {
+    "id": "test-id",
+    "username": "testuser",
+    "name": "Test User",
+    "email": "test@example.com"
+}
+
+# Override the authentication dependency
+def get_mock_current_user():
+    return mock_user
+
+app.dependency_overrides[get_current_user] = get_mock_current_user
 
 # Use TestClient for synchronous tests
 client = TestClient(app)
@@ -20,8 +35,8 @@ def test_read_root():
     assert response.json() == {"status": "BMad Backend is running"}
 
 def test_get_agents_endpoint():
-    """Tests the /agents endpoint."""
-    response = client.get("/agents")
+    """Tests the /api/agents endpoint."""
+    response = client.get("/api/agents")
     assert response.status_code == 200
     data = response.json()
     assert "agents" in data
@@ -30,8 +45,8 @@ def test_get_agents_endpoint():
         assert any(agent["id"] == "analyst" for agent in data["agents"])
 
 def test_get_workflows_endpoint():
-    """Tests the /workflows endpoint."""
-    response = client.get("/workflows")
+    """Tests the /api/workflows endpoint."""
+    response = client.get("/api/workflows")
     assert response.status_code == 200
     assert response.json() == {"workflows": []}
 
@@ -59,7 +74,7 @@ def test_chat_endpoint():
     app.dependency_overrides[get_team_graph] = get_mock_graph
 
     # Make the request using the test client
-    response = client.post("/chat", json={"session_id": "123", "message": "Hello"})
+    response = client.post("/api/chat", json={"session_id": "123", "message": "Hello"})
 
     # Assertions
     assert response.status_code == 200

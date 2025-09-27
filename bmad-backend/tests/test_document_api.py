@@ -7,10 +7,23 @@ from fastapi.testclient import TestClient
 
 from app.models import ManagedDocument
 from app.routes.document_routes import router as document_router
+from app.security import get_current_user
 
 # Create a test app with just the document routes
 test_app = FastAPI()
 test_app.include_router(document_router)
+
+# Mock the authentication dependency (always returns a test user)
+async def mock_current_user():
+    return {
+        "id": "test-user-id",
+        "username": "testuser",
+        "name": "Test User",
+        "email": "test@example.com"
+    }
+
+test_app.dependency_overrides[get_current_user] = mock_current_user
+
 client = TestClient(test_app)
 
 class TestDocumentRoutes(unittest.TestCase):

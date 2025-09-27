@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiSettings, FiChevronDown } from 'react-icons/fi';
+import { FiSettings, FiChevronDown, FiLogOut, FiUser } from 'react-icons/fi';
+import type { User } from '../types';
 
 interface HeaderProps {
   onConfigClick: () => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onConfigClick }) => {
+const Header: React.FC<HeaderProps> = ({ onConfigClick, user, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -37,6 +40,14 @@ const Header: React.FC<HeaderProps> = ({ onConfigClick }) => {
     <header className="app-header">
       <h1 className="app-title">BMAD Agentic Framework</h1>
       <div className="header-actions">
+        {user && (
+          <div className="user-info">
+            <span className="user-name">
+              <FiUser className="user-icon" />
+              {user.name}
+            </span>
+          </div>
+        )}
         <div className="config-menu-container">
           <button 
             ref={buttonRef}
@@ -54,7 +65,13 @@ const Header: React.FC<HeaderProps> = ({ onConfigClick }) => {
             <div ref={menuRef} className="config-dropdown">
               <ul>
                 <li><button onClick={handleFigmaClick}>Figma Credentials</button></li>
-                {/* Add more menu items here as needed */}
+                {user && (
+                  <li>
+                    <button onClick={() => { onLogout(); setIsMenuOpen(false); }}>
+                      <FiLogOut className="logout-icon" /> Logout
+                    </button>
+                  </li>
+                )}
               </ul>
             </div>
           )}

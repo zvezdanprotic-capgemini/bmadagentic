@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FiChevronDown, FiChevronUp, FiUsers, FiInfo } from 'react-icons/fi';
-import { AgentList } from './AgentList';
+// import { AgentList } from './AgentList'; // Unused import commented out
 import type { Agent } from '../types';
 
 interface DescriptionProps {

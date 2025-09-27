@@ -86,7 +86,6 @@ class FigmaService:
             )
             
             return [doc]
-            }
             
         except Exception as e:
             return {
